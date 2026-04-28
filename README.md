@@ -26,8 +26,8 @@ _Coming soon to the Chrome Web Store._
 ### From Source (developers)
 
 ```bash
-git clone https://github.com/fasilminale/screen-recorder-extension.git
-cd screen-recorder-extension
+git clone https://github.com/fasilminale/WubCast.git
+cd WubCast
 ```
 
 1. Open `chrome://extensions/`
@@ -80,7 +80,7 @@ Contributions are welcome! Here's how:
 
 ### Reporting Bugs
 
-Open an [issue](https://github.com/fasilminale/screen-recorder-extension/issues) with:
+Open an [issue](https://github.com/fasilminale/WubCast/issues) with:
 - Chrome version
 - OS
 - Steps to reproduce

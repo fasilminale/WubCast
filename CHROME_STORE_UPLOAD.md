@@ -73,11 +73,11 @@ Exclude from the upload ZIP:
 - `.DS_Store`
 - `CHROME_STORE_UPLOAD.md`
 - `package-lock.json`
-- `screen-recorder-extension.zip`
+- `WubCast.zip`
 
 Build command:
 ```bash
-zip -r wubcast.zip . -x "*.git*" -x "*node_modules*" -x "*.cursor*" -x "*.DS_Store" -x "*CHROME_STORE_UPLOAD.md" -x "*package-lock.json" -x "*screen-recorder-extension.zip"
+zip -r wubcast.zip . -x "*.git*" -x "*node_modules*" -x "*.cursor*" -x "*.DS_Store" -x "*CHROME_STORE_UPLOAD.md" -x "*package-lock.json" -x "*WubCast.zip"
 ```
 
 ## Upload Process
