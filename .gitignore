@@ -1,0 +1,34 @@
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Recorded videos (don't commit test recordings)
+*.webm
+*.mp4
+cursor-data-*.json
+
+# Chrome extension build artifacts
+*.crx
+*.pem
+*.zip
+
+# Node modules (if you add build tools later)
+node_modules/
+package-lock.json

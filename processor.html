@@ -1,0 +1,371 @@
+<!--
+  WubCast Screen Recorder
+  Copyright (c) 2026 Fasil Minale
+  GitHub: https://github.com/fasilminale
+
+  Licensed under the MIT License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Processor - Add Automatic Zoom</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    .step {
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border-left: 4px solid #667eea;
+    }
+
+    .step h2 {
+      color: #333;
+      font-size: 20px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step-number {
+      background: #667eea;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+      margin: 10px 10px 10px 0;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .file-label {
+      background: #667eea;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-block;
+      transition: all 0.3s;
+    }
+
+    .file-label:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+    }
+
+    .file-name {
+      display: inline-block;
+      margin-left: 10px;
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-success {
+      background: #28a745;
+    }
+
+    .btn-success:hover {
+      background: #218838;
+    }
+
+    .preview-area {
+      margin: 20px 0;
+      display: none;
+    }
+
+    .preview-area.active {
+      display: block;
+    }
+
+    video {
+      width: 100%;
+      max-width: 800px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .analysis-results {
+      background: #e7f3ff;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      display: none;
+    }
+
+    .analysis-results.active {
+      display: block;
+    }
+
+    .stat {
+      margin: 10px 0;
+      font-size: 15px;
+    }
+
+    .stat strong {
+      color: #667eea;
+    }
+
+    .zoom-segment {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 8px 0;
+      border-left: 3px solid #667eea;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #e0e0e0;
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 20px 0;
+      display: none;
+    }
+
+    .progress-bar.active {
+      display: block;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      width: 0%;
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+
+    .info-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+
+    .success-box {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      display: none;
+    }
+
+    .success-box.active {
+      display: block;
+    }
+
+    .timeline {
+      margin: 20px 0;
+      height: 60px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .timeline-zoom {
+      position: absolute;
+      height: 100%;
+      background: rgba(102, 126, 234, 0.3);
+      border: 2px solid #667eea;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .timeline-zoom:hover {
+      background: rgba(102, 126, 234, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 Video Processor with Auto Zoom</h1>
+    <p class="subtitle">Add beautiful automatic zoom effects to your recordings based on cursor clicks</p>
+
+    <!-- Step 1: Load Files -->
+    <div class="step">
+      <h2>
+        <span class="step-number">1</span>
+        Load Your Recording
+      </h2>
+      <p style="margin-bottom: 15px; color: #666;">
+        Select the video file (.webm) and cursor data file (.json) from your recording
+      </p>
+      
+      <div class="file-input-wrapper">
+        <input type="file" id="videoFile" class="file-input" accept="video/webm,video/mp4">
+        <label for="videoFile" class="file-label">📹 Choose Video File</label>
+        <span id="videoFileName" class="file-name"></span>
+      </div>
+
+      <div class="file-input-wrapper">
+        <input type="file" id="cursorFile" class="file-input" accept="application/json">
+        <label for="cursorFile" class="file-label">🖱️ Choose Cursor Data</label>
+        <span id="cursorFileName" class="file-name"></span>
+      </div>
+
+      <div class="preview-area" id="previewArea">
+        <h3 style="margin: 20px 0 10px 0; color: #333;">Original Video:</h3>
+        <video id="previewVideo" controls></video>
+      </div>
+    </div>
+
+    <!-- Step 2: Analyze -->
+    <div class="step">
+      <h2>
+        <span class="step-number">2</span>
+        Analyze Click Patterns
+      </h2>
+      <p style="margin-bottom: 15px; color: #666;">
+        Detect zoom-worthy moments (2+ clicks within 3 seconds)
+      </p>
+      
+      <button id="analyzeBtn" class="btn" disabled>
+        🔍 Analyze Cursor Data
+      </button>
+
+      <div class="analysis-results" id="analysisResults">
+        <h3 style="color: #0066cc; margin-bottom: 15px;">Analysis Results:</h3>
+        <div class="stat">
+          <strong>Zoom Segments Found:</strong> <span id="segmentCount">0</span>
+        </div>
+        <div class="stat">
+          <strong>Total Zoom Time:</strong> <span id="zoomTime">0s</span>
+        </div>
+        <div class="stat">
+          <strong>Total Clicks:</strong> <span id="totalClicks">0</span>
+        </div>
+
+        <h4 style="margin: 20px 0 10px 0; color: #333;">Timeline:</h4>
+        <div class="timeline" id="timeline"></div>
+
+        <h4 style="margin: 20px 0 10px 0; color: #333;">Zoom Segments:</h4>
+        <div id="segmentsList"></div>
+      </div>
+    </div>
+
+    <!-- Step 3: Process -->
+    <div class="step">
+      <h2>
+        <span class="step-number">3</span>
+        Apply Zoom Effects
+      </h2>
+      <p style="margin-bottom: 15px; color: #666;">
+        Process the video with smooth zoom and pan animations
+      </p>
+      
+      <div class="info-box">
+        ⚠️ <strong>Note:</strong> Processing may take a few minutes depending on video length. 
+        The browser tab must stay active during processing.
+      </div>
+
+      <button id="processBtn" class="btn btn-success" disabled>
+        ✨ Apply Automatic Zoom Effects
+      </button>
+
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill">0%</div>
+      </div>
+
+      <div class="success-box" id="successBox">
+        <h3 style="color: #155724; margin-bottom: 10px;">✅ Processing Complete!</h3>
+        <p>Your video with automatic zoom effects is ready to download.</p>
+        <button id="downloadBtn" class="btn btn-success" style="margin-top: 15px;">
+          ⬇️ Download Processed Video
+        </button>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="info-box">
+      <h3 style="margin-bottom: 10px;">How Automatic Zoom Works (Like WubCast):</h3>
+      <ul style="margin-left: 20px; line-height: 1.8;">
+        <li><strong>Detection:</strong> 2+ clicks within 3 seconds triggers a zoom</li>
+        <li><strong>Smooth Transitions:</strong> 500ms ease-in/out for professional look</li>
+        <li><strong>Focus Area:</strong> Zooms to the center of click activity</li>
+        <li><strong>Cursor Highlight:</strong> Adds subtle highlight circle during zoom</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="zoom-analyzer.js"></script>
+  <script src="video-processor.js"></script>
+  <script src="processor-ui.js"></script>
+</body>
+</html>

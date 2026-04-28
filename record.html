@@ -1,0 +1,612 @@
+<!--
+  WubCast Screen Recorder
+  Copyright (c) 2026 Fasil Minale
+  GitHub: https://github.com/fasilminale
+
+  Licensed under the MIT License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WubCast - Screen Recorder with Auto Pan Zoom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 50%, #d1fae5 100%);
+      min-height: 100vh;
+      color: #1f2937;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 48px 24px 32px;
+    }
+
+    .brand {
+      color: #10b981;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .title {
+      font-size: 42px;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -1px;
+      line-height: 1.2;
+    }
+
+    /* Main content */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+    }
+
+    /* Steps card */
+    .steps-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .step {
+      display: flex;
+      gap: 24px;
+      padding: 28px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .step:last-child {
+      border-bottom: none;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #10b981;
+      flex-shrink: 0;
+      border: 2px solid #a7f3d0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+
+    .step-description {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: #10b981;
+      color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-outline {
+      background: white;
+      color: #10b981;
+      border: 2px solid #10b981;
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: #ecfdf5;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .media-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .media-buttons .btn {
+      flex: 1;
+      min-width: 200px;
+      justify-content: center;
+    }
+
+    /* Tip box */
+    .tip-box {
+      margin-top: 32px;
+      padding: 20px 24px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .tip-box p {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    .tip-box strong {
+      color: #374151;
+    }
+
+    .tip-box a {
+      color: #10b981;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .tip-box a:hover {
+      text-decoration: underline;
+    }
+
+    /* Footer */
+    .footer {
+      max-width: 1200px;
+      margin: 48px auto 0;
+      padding: 32px 24px;
+      border-top: 1px solid #d1d5db;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 32px;
+    }
+
+    .footer-brand {
+      color: #10b981;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .footer-description {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .footer-copyright {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .footer-column h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 12px;
+    }
+
+    .footer-column ul {
+      list-style: none;
+    }
+
+    .footer-column li {
+      margin-bottom: 8px;
+    }
+
+    .footer-column a {
+      font-size: 13px;
+      color: #6b7280;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-column a:hover {
+      color: #10b981;
+    }
+
+    /* Recording state */
+    .recording-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .recording-overlay.active {
+      display: flex;
+    }
+
+    .recording-card {
+      background: white;
+      border-radius: 24px;
+      padding: 48px;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .recording-timer {
+      font-size: 72px;
+      font-weight: 700;
+      color: #ef4444;
+      font-family: 'DM Sans', monospace;
+      letter-spacing: 4px;
+      margin: 24px 0;
+    }
+
+    .recording-dot {
+      width: 16px;
+      height: 16px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .title {
+        font-size: 28px;
+      }
+
+      .step {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .footer {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Status indicator */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #dbeafe;
+      border: 1px solid #93c5fd;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #1d4ed8;
+      font-weight: 500;
+      margin-top: 12px;
+    }
+
+    .status-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Unsupported Website Modal */
+    .unsupported-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .unsupported-modal.active {
+      display: flex;
+    }
+
+    .unsupported-modal-content {
+      background: #f3f4f6;
+      border-radius: 8px;
+      padding: 0;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .unsupported-modal-header {
+      background: #f3f4f6;
+      padding: 16px 20px;
+      border-bottom: 1px solid #d1d5db;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .unsupported-modal-body {
+      padding: 20px;
+      background: white;
+      font-size: 14px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .unsupported-modal-footer {
+      padding: 12px 20px;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .unsupported-modal-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+
+    .unsupported-modal-btn:hover {
+      background: #2563eb;
+    }
+
+    .unsupported-modal-btn:active {
+      background: #1d4ed8;
+    }
+
+    /* Camera overlay during recording */
+    .camera-overlay {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 200px;
+      height: 150px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      z-index: 1001;
+      display: none;
+      background: #000;
+    }
+
+    .camera-overlay.active {
+      display: block;
+    }
+
+    .camera-overlay video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* Mirror for natural feel */
+    }
+  </style>
+</head>
+<body>
+  <!-- Minimal message shown while we hand off to the offscreen capture flow.
+       The full setup UI below is only rendered when the page was explicitly
+       opened with ?legacy=1 (the pre-offscreen fallback). -->
+  <div id="offscreenRedirect" style="display:none; padding:64px 24px; text-align:center; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <div style="font-size:32px; font-weight:700; color:#111827; margin-bottom:12px;">Starting your recording…</div>
+    <div style="font-size:14px; color:#6b7280;">Pick a screen, window or tab in the Chrome prompt, then record away. This tab will close automatically.</div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="brand">WubCast - Screen Recorder with Auto Pan Zoom</div>
+    <h1 class="title">Set up your recording</h1>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <div class="steps-card">
+      <div class="step">
+        <div class="step-content" style="padding-left: 0;">
+          <h3 class="step-title">Ready to record</h3>
+          <p class="step-description">Most users start recordings from the toolbar popup — it remembers your camera, mic and system audio preferences. This page is the full setup surface for when you want finer control. When the picker appears, select the screen, window or tab you want to capture.</p>
+
+          <div style="margin: 16px 0; padding: 12px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px;">
+            <strong style="color: #92400e;">🔊 System audio:</strong>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #78350f; line-height: 1.5;">
+              To record tab / system audio, tick <strong>"Share tab audio"</strong> (or <strong>"Share system audio"</strong>) in the picker. Enabling system audio in the picker may disable microphone recording for that capture — use <strong>Enable microphone</strong> below if you want voice instead.
+            </p>
+          </div>
+
+          <div class="media-buttons" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">
+            <button id="selectScreenBtn" class="btn btn-primary">
+              <span class="btn-icon">🖥️</span>
+              Select screen
+            </button>
+            <button id="enableCameraBtn" class="btn btn-outline" type="button">
+              <span class="btn-icon">📹</span>
+              Enable camera (overlay)
+            </button>
+            <button id="enableMicBtn" class="btn btn-outline" type="button">
+              <span class="btn-icon">🎤</span>
+              Enable microphone
+            </button>
+          </div>
+
+          <div id="screenStatus" class="status-badge" style="display: none; margin-top: 12px;">
+            <span class="dot"></span>
+            <span id="screenStatusText">Screen selected - Ready to record</span>
+          </div>
+          <div id="cameraStatus" class="status-badge" style="display: none; margin-top: 8px;">
+            <span class="dot"></span>
+            <span id="cameraStatusText"></span>
+          </div>
+
+          <button id="startRecordingBtn" class="btn btn-outline" disabled style="margin-top: 16px;">
+            <span class="btn-icon">🎬</span>
+            Start recording
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tip Box -->
+    <div class="tip-box">
+      <p>
+        <strong>💡 Tip:</strong> Use the keyboard shortcut (Ctrl/Cmd + Shift + E) to start or stop a recording from any page, or click the extension icon to open the quick-start popup.
+      </p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div>
+      <div class="footer-brand">WubCast - Screen Recorder with Auto Pan Zoom</div>
+      <p class="footer-description">A browser extension that creates beautiful screen recordings with zooms and pans that guide viewer focus.</p>
+      <p class="footer-copyright">© 2024 WubCast</p>
+    </div>
+    <div class="footer-column">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="https://github.com/fasilminale/WubCast/blob/main/TERMS_OF_SERVICE.md" target="_blank" rel="noopener noreferrer">Terms of Service</a></li>
+        <li><a href="https://github.com/fasilminale/WubCast/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener noreferrer">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Recording Overlay -->
+  <div id="recordingOverlay" class="recording-overlay">
+    <div class="recording-card">
+      <h2 style="font-size: 24px; margin-bottom: 8px;">
+        <span class="recording-dot"></span>
+        Recording...
+      </h2>
+      <p style="color: #6b7280; margin-bottom: 16px;">Use the floating controls on the page, the keyboard shortcut, or the button below to stop.</p>
+      <div class="recording-timer" id="timer">00:00</div>
+      <button id="stopRecordingBtn" class="btn btn-primary" style="background: #ef4444; width: 100%;">
+        <span class="btn-icon">⏹️</span>
+        Stop Recording
+      </button>
+    </div>
+  </div>
+
+  <!-- Unsupported Website Modal -->
+  <div id="unsupportedModal" class="unsupported-modal">
+    <div class="unsupported-modal-content">
+      <div class="unsupported-modal-header">
+        The extension WubCast says
+      </div>
+      <div class="unsupported-modal-body" id="unsupportedModalMessage">
+        WubCast is not allowed to record your mouse interactions on Chrome Web Store and Settings pages.
+      </div>
+      <div class="unsupported-modal-footer">
+        <button id="unsupportedModalOk" class="unsupported-modal-btn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="prefs.js"></script>
+  <script>
+    // record.html is a legacy fallback now. The happy path is offscreen-driven.
+    // When this page is loaded without ?legacy=1 we hide the setup UI, ask
+    // the service worker to start an offscreen capture, and close the tab.
+    // record.js is only loaded in legacy mode so its auto-start code doesn't
+    // race against the offscreen flow.
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const isLegacy = params.get('legacy') === '1';
+      if (isLegacy) {
+        const s = document.createElement('script');
+        s.src = 'record.js';
+        document.body.appendChild(s);
+        return;
+      }
+      // Non-legacy redirect path.
+      const hideSelectors = ['header.header', 'main.container', 'footer.footer', '#recordingOverlay', '#unsupportedModal'];
+      hideSelectors.forEach((sel) => { const el = document.querySelector(sel); if (el) el.style.display = 'none'; });
+      const redirectEl = document.getElementById('offscreenRedirect');
+      if (redirectEl) redirectEl.style.display = 'block';
+
+      const parsedTabId = parseInt(params.get('tabId'), 10);
+      const targetTabId = Number.isFinite(parsedTabId) ? parsedTabId : null;
+
+      (async () => {
+        try {
+          const resp = await chrome.runtime.sendMessage({
+            action: 'startCaptureViaOffscreen',
+            tabId: targetTabId
+          });
+          if (!resp || !resp.success) {
+            console.warn('[Record] Offscreen capture failed:', resp && resp.error);
+          }
+        } catch (e) {
+          console.warn('[Record] Could not hand off to offscreen:', e);
+        }
+        setTimeout(() => { try { window.close(); } catch (_) { /* noop */ } }, 250);
+      })();
+    })();
+  </script>
+</body>
+</html>

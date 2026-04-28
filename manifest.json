@@ -1,0 +1,71 @@
+{
+  "manifest_version": 3,
+  "name": "WubCast",
+  "version": "1.0.2",
+  "author": "Fasil Minale",
+  "description": "Create beautiful, cinematic browser demos with liquid-smooth cursor tracking and automated zooms.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "desktopCapture",
+    "tabs",
+    "scripting",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "WubCast",
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "record.html",
+        "record.js",
+        "editor.html",
+        "editor.js",
+        "zoom-analyzer.js",
+        "video-processor.js",
+        "content.js",
+        "recording-hud.js",
+        "prefs.js",
+        "permission.html",
+        "permission.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "commands": {
+    "toggle-recording": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
+      },
+      "description": "Start or stop recording"
+    },
+    "toggle-pause": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P",
+        "mac": "Command+Shift+P"
+      },
+      "description": "Pause or resume the current recording"
+    }
+  },
+  "minimum_chrome_version": "102"
+}

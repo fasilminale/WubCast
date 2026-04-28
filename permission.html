@@ -1,0 +1,83 @@
+<!--
+  WubCast Screen Recorder
+  Licensed under the MIT License.
+
+  One-shot permission tab. Offscreen documents can't host getUserMedia
+  permission prompts in Chrome — that's why the popup's "Enable microphone"
+  was failing with NotAllowedError. This tiny page opens in a regular tab,
+  calls getUserMedia there (which Chrome *can* surface a prompt for), and
+  then closes itself once the browser has cached the decision for the
+  extension's origin. After that the offscreen document can acquire the same
+  stream silently.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WubCast - Grant access</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    /* WubCast brand palette - Glacier White bg, Wub Purple accent */
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(129, 140, 248, 0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 70% 80%, rgba(199, 210, 254, 0.35) 0%, transparent 60%),
+        #F9FAFB;
+      color: #111827;
+    }
+    .card {
+      max-width: 480px;
+      padding: 32px 36px;
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+      text-align: center;
+    }
+    .brand {
+      color: #6366F1;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+    }
+    p { margin: 0 0 16px; color: #6B7280; font-size: 14px; line-height: 1.5; }
+    p strong { color: #111827; }
+    .status {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #F3F4F6;
+      color: #374151;
+      font-size: 13px;
+    }
+    .status.granted { background: rgba(129, 140, 248, 0.12); color: #4338CA; }
+    .status.denied  { background: #FEF2F2; color: #991B1B; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">WubCast</div>
+    <h1 id="title">Grant access</h1>
+    <p id="description">Click <strong>Allow</strong> in the browser prompt so recordings can use your microphone or camera.</p>
+    <div class="status" id="status">Waiting for your choice…</div>
+  </div>
+  <script src="permission.js"></script>
+</body>
+</html>

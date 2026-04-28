@@ -1,0 +1,1624 @@
+<!--
+  WubCast Screen Recorder
+  Copyright (c) 2026 Fasil Minale
+  GitHub: https://github.com/fasilminale
+
+  Licensed under the MIT License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor | WubCast - Screen Recorder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* WubCast brand palette
+         Glacier White bg, Ink Black text, Wub Purple accent, Subtle Gray borders. */
+      --bg-main: #F9FAFB;
+      --bg-panel: #FFFFFF;
+      --bg-dark: #1E1B4B;
+      --border: #E5E7EB;
+      --border-dark: #D1D5DB;
+      --text-primary: #111827;
+      --text-secondary: #6B7280;
+      --text-muted: #9CA3AF;
+      --accent: #818CF8;
+      --accent-hover: #6366F1;
+      --accent-strong: #4F46E5;
+      --accent-light: #E0E7FF;
+      --accent-soft: rgba(129, 140, 248, 0.14);
+      --danger: #EF4444;
+      --warning: #F59E0B;
+      --success: #10B981;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ========== MAIN LAYOUT ========== */
+    .editor-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .editor-main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0; /* Important for flex children */
+    }
+
+    /* ========== LEFT PANEL - VIDEO PREVIEW ========== */
+    .preview-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-main);
+      min-width: 0;
+      min-height: 0; /* Important for flex children */
+      overflow: hidden;
+    }
+
+    .preview-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      /* Ink Black → deep indigo; keeps the cinematic feel of a video editor
+         stage while nodding to the Wub Purple accent. */
+      background: linear-gradient(135deg, #111827 0%, #1E1B4B 100%);
+      min-height: 0; /* Allow shrinking */
+      overflow: hidden;
+    }
+
+    .video-frame {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .video-background {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .video-window {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      /* Cinematic smooth transition for zoom effects only */
+      transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1), width 0s, height 0s;
+      will-change: transform;
+    }
+
+    .video-window video {
+      display: none;
+    }
+
+    .video-window canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 48px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+    }
+
+    .empty-state-icon {
+      font-size: 56px;
+    }
+
+    .empty-state h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .empty-state p {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+    }
+
+    .load-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    /* ========== TIMELINE TOOLBAR — WubCast ========== */
+    .timeline-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0; /* Don't shrink the toolbar */
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+      margin: 0 8px;
+    }
+
+    .toolbar-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toolbar-btn:hover {
+      background: var(--bg-main);
+      border-color: var(--border-dark);
+      transform: translateY(-1px);
+    }
+
+    .toolbar-btn:active {
+      transform: translateY(0);
+    }
+
+    .toolbar-btn.primary-action {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      border: none;
+      color: white;
+      box-shadow: 0 2px 8px rgba(129, 140, 248, 0.35);
+    }
+
+    .toolbar-btn.primary-action:hover {
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .toolbar-btn.icon-only {
+      padding: 8px;
+      width: 36px;
+      height: 36px;
+    }
+
+    .toolbar-btn svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .zoom-count-badge {
+      padding: 6px 12px;
+      background: var(--accent-light);
+      color: var(--accent-hover);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ========== SIMPLE TIMELINE WITH TRIM HANDLES ========== */
+    .timeline-container.simple-timeline {
+      background: #f5f5f5;
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      flex-shrink: 0;
+    }
+
+    .simple-timeline .timeline-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .simple-timeline .play-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(129, 140, 248, 0.35);
+    }
+
+    .simple-timeline .play-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .simple-timeline .play-btn svg {
+      width: 14px;
+      height: 14px;
+      margin-left: 2px;
+    }
+
+    .simple-timeline .time-display {
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+      color: var(--text-primary);
+      flex-shrink: 0;
+    }
+
+    .simple-timeline .time-display .current,
+    .simple-timeline .time-display .current-ms {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .simple-timeline .time-display .time-separator {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .simple-timeline .reset-btn {
+      margin-left: auto;
+      padding: 6px 12px;
+      font-size: 12px;
+      gap: 6px;
+      background: #666;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .simple-timeline .reset-btn:hover {
+      background: #555;
+    }
+
+    .simple-timeline .reset-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Timeline container */
+    .timeline-container-inner {
+      position: relative;
+      height: 60px;
+      background: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .timeline {
+      position: relative;
+      height: 100%;
+      width: 100%;
+    }
+
+    .time-markers {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 16px;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 40px;
+    }
+
+    .time-marker {
+      position: relative;
+      font-size: 9px;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .time-marker::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 4px;
+      background: #ddd;
+    }
+
+    .trim-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 40px;
+      cursor: ew-resize;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+    }
+
+    .trim-handle-left {
+      left: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(180, 180, 180, 0.4),
+        rgba(180, 180, 180, 0.4) 8px,
+        rgba(200, 200, 200, 0.3) 8px,
+        rgba(200, 200, 200, 0.3) 16px
+      );
+      justify-content: flex-start;
+      padding-left: 6px;
+    }
+
+    .trim-handle-right {
+      right: 0;
+      left: auto;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(180, 180, 180, 0.4),
+        rgba(180, 180, 180, 0.4) 8px,
+        rgba(200, 200, 200, 0.3) 8px,
+        rgba(200, 200, 200, 0.3) 16px
+      );
+      justify-content: flex-end;
+      padding-right: 6px;
+    }
+
+    .scissor-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      transition: transform 0.2s;
+    }
+
+    .trim-handle:hover .scissor-icon {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 1);
+    }
+
+    .scissor-icon svg {
+      width: 12px;
+      height: 12px;
+      fill: #666;
+    }
+
+    .trim-label {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #666;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .trim-label svg {
+      width: 12px;
+      height: 12px;
+      fill: #666;
+    }
+
+    .trim-label-left {
+      left: 50px;
+    }
+
+    .trim-label-right {
+      right: 50px;
+    }
+
+    .playhead {
+      position: absolute;
+      top: 16px;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent);
+      z-index: 5;
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(129, 140, 248, 0.55);
+    }
+
+    .playhead::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 8px solid var(--accent);
+    }
+
+    .trimmed-area {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+    }
+
+    .trimmed-left {
+      left: 0;
+    }
+
+    .trimmed-right {
+      right: 0;
+    }
+
+    /* Timeline track */
+    .simple-timeline .timeline-track {
+      position: absolute;
+      top: 16px;
+      left: 40px;
+      right: 40px;
+      bottom: 0;
+      cursor: pointer;
+    }
+
+    /* Playhead */
+    .simple-timeline .timeline-playhead {
+      position: absolute;
+      top: 16px;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent);
+      z-index: 5;
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(129, 140, 248, 0.55);
+      transform: translateX(-50%);
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+    }
+
+    .simple-timeline .timeline-playhead::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid #ef4444;
+    }
+
+    /* ========== RIGHT SIDEBAR ========== */
+    .sidebar {
+      width: 320px;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Scrollable sidebar content */
+    .sidebar-content-scrollable {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Section divider */
+    .section-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 24px 0;
+    }
+
+    .export-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(129, 140, 248, 0.35);
+      margin-bottom: 0;
+    }
+
+    .export-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+    }
+
+    .export-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Buy me a coffee support link */
+    .coffee-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+
+    .coffee-btn:hover {
+      color: #FFDD00;
+      border-color: rgba(255, 221, 0, 0.45);
+      background: rgba(255, 221, 0, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .coffee-btn svg {
+      flex-shrink: 0;
+    }
+
+    /* Developer credit footer (pinned at bottom of sidebar) */
+    .dev-credit {
+      flex-shrink: 0;
+      padding: 14px 20px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dev-credit-text {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .dev-credit-name {
+      font-weight: 500;
+    }
+
+    .dev-credit-name a {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+
+    .dev-credit-name a:hover {
+      color: var(--accent-hover);
+    }
+
+    .dev-credit-hire {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .dev-credit-hire::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.18);
+    }
+
+    .dev-credit-hire:hover {
+      background: var(--accent-light);
+      transform: translateY(-1px);
+    }
+
+    .dev-credit-links {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dev-credit-link {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .dev-credit-link:hover {
+      color: var(--accent-hover);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      transform: translateY(-1px);
+    }
+
+    .dev-credit-link svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Panel sections */
+    .panel-section {
+      margin-bottom: 24px;
+    }
+
+    .panel-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Aspect ratio dropdown */
+    .aspect-select {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+      transition: all 0.15s;
+    }
+
+    .aspect-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    /* Background options */
+    .bg-tabs {
+      display: flex;
+      background: var(--bg-main);
+      border-radius: 10px;
+      padding: 3px;
+      margin-bottom: 12px;
+    }
+
+    .bg-tab {
+      flex: 1;
+      padding: 8px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .bg-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .bg-tab.active {
+      background: var(--bg-panel);
+      color: var(--text-primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .bg-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .bg-option {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .bg-option:hover {
+      transform: scale(1.05);
+    }
+
+    .bg-option.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-light);
+    }
+
+    .bg-upload {
+      background: var(--bg-main);
+      border: 2px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 20px;
+    }
+
+    .bg-upload:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Color picker grid */
+    .color-grid {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .color-option {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .color-option:hover {
+      transform: scale(1.15);
+    }
+
+    .color-option.selected {
+      border-color: var(--text-primary);
+      box-shadow: 0 0 0 2px var(--bg-panel);
+    }
+
+    /* Settings rows */
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .setting-label {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .setting-select {
+      padding: 8px 12px;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+      min-width: 130px;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-main);
+      border: 1px solid var(--border);
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background-color: var(--text-muted);
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+      background-color: white;
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.hidden {
+      display: none;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      position: relative;
+      background: var(--bg-panel);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 420px;
+      animation: modalIn 0.2s ease-out;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: none;
+      font-size: 24px;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover:not(:disabled) {
+      background: var(--bg-main);
+      color: var(--text-primary);
+    }
+    
+    .modal-close:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .export-option {
+      margin-bottom: 20px;
+    }
+
+    .export-option:last-child {
+      margin-bottom: 0;
+    }
+
+    .export-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .export-select {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+    }
+
+    .export-select:focus {
+      border-color: var(--accent);
+    }
+
+    .export-info {
+      background: var(--bg-main);
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+
+    .export-info span {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      padding: 20px 24px;
+      border-top: 1px solid var(--border);
+      justify-content: flex-end;
+    }
+
+    .btn-secondary {
+      padding: 10px 20px;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-primary svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .setting-toggle {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      background: var(--border);
+      border-radius: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .setting-toggle.active {
+      background: var(--accent);
+    }
+
+    .setting-toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .setting-toggle.active::after {
+      left: 25px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(129, 140, 248, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+    }
+
+    .btn-secondary {
+      background: var(--bg-main);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #111827 0%, #1E1B4B 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .loading-overlay.hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 16px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Gradient backgrounds */
+    .bg-grad-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .bg-grad-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .bg-grad-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .bg-grad-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .bg-grad-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .bg-grad-6 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+    .bg-grad-7 { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+    .bg-grad-8 { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-main);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-dark);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading your recording...</div>
+  </div>
+
+  <div class="editor-container">
+    <div class="editor-main">
+      <!-- Left: Video Preview -->
+      <div class="preview-panel">
+        <div class="preview-area">
+          <!-- Empty state -->
+          <div id="emptyState" class="empty-state hidden">
+            <div class="empty-state-icon">🎬</div>
+            <h3>Load a recording</h3>
+            <p>Supports automatic and follow-cursor zoom</p>
+            <div class="load-buttons">
+              <button id="newRecordingBtn" class="btn btn-primary">🎥 New Recording</button>
+              <button id="loadVideoBtn" class="btn btn-secondary">📁 Load Video</button>
+            </div>
+          </div>
+
+          <!-- Video frame -->
+          <div id="videoFrame" class="video-frame">
+            <div class="video-background" id="videoBackground"></div>
+            <div class="video-window" id="videoWindow">
+              <video id="video"></video>
+              <canvas id="previewCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simple Timeline with Trim Handles -->
+        <div class="timeline-container simple-timeline">
+          <div class="timeline-header">
+            <button class="play-btn" id="playBtn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+            <button id="resetTimelineBtn" class="reset-btn" title="Reset trim">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                <path d="M2.5 2v6h6M21.5 22v-6h-6"/>
+                <path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"/>
+              </svg>
+              Reset
+            </button>
+            <div class="time-display" id="timeDisplay">00:00 - 00:00</div>
+          </div>
+
+          <div class="timeline-container-inner">
+            <div class="timeline">
+              <div class="time-markers" id="timeMarkers"></div>
+              
+              <div class="trimmed-area trimmed-left" id="trimmedLeft"></div>
+              <div class="trimmed-area trimmed-right" id="trimmedRight"></div>
+              
+              <div class="playhead" id="playhead"></div>
+              
+              <div class="trim-handle trim-handle-left" id="trimStartScissor">
+                <div class="scissor-icon">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z"/>
+                  </svg>
+                </div>
+                <div class="trim-label trim-label-left" id="leftLabel" style="display: none;">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z"/>
+                  </svg>
+                  Trim
+                </div>
+              </div>
+              
+              <div class="trim-handle trim-handle-right" id="trimEndScissor">
+                <div class="scissor-icon">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Timeline track for click-to-seek -->
+              <div class="timeline-track" id="timelineTrack"></div>
+            </div>
+          </div>
+
+          <!-- Hidden elements for JS compatibility -->
+          <div id="timelineRuler" style="display:none;"></div>
+          <div id="zoomSegmentsLayer" style="display:none;"></div>
+          <div id="timelineProgressFill" style="display:none;"></div>
+          <span id="zoomCountBadge" style="display:none;">0 zooms</span>
+        </div>
+      </div>
+
+      <!-- Right: Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-content-scrollable">
+          <!-- Export Section -->
+          <div class="panel-section">
+            <button id="exportBtn" class="export-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Export video
+            </button>
+            <a
+              id="coffeeBtn"
+              class="coffee-btn"
+              href="https://paypal.me/FasilMinale1"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Support WubCast — Buy me a coffee"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
+                <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+                <line x1="6" y1="2" x2="6" y2="4"/>
+                <line x1="10" y1="2" x2="10" y2="4"/>
+                <line x1="14" y1="2" x2="14" y2="4"/>
+              </svg>
+              Buy me a coffee
+            </a>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Aspect Ratio Section -->
+          <div class="panel-section">
+            <div class="panel-label">Aspect ratio <span style="font-size: 10px; color: var(--accent); font-weight: 600; margin-left: 4px;">BETA</span></div>
+            <select id="aspectSelect" class="aspect-select">
+              <option value="native">Native</option>
+              <option value="21:9">21:9 Ultra Wide</option>
+              <option value="16:9">16:9 Widescreen</option>
+              <option value="16:10">16:10</option>
+              <option value="3:2">3:2</option>
+              <option value="4:3">4:3 Standard</option>
+              <option value="1:1">1:1 Square</option>
+              <option value="3:4">3:4 Portrait</option>
+              <option value="9:16">9:16 Vertical</option>
+            </select>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Browser Frame Section -->
+          <div class="panel-section">
+            <div class="panel-label">Browser Frame</div>
+            <div class="setting-row">
+              <span class="setting-label">Show browser UI</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="showBrowserFrame" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-row" style="margin-top: 12px;">
+              <span class="setting-label">Shadow effect</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="showShadow" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; font-size: 12px; color: var(--text-muted);">
+              <span id="browserFrameHint"></span>
+            </div>
+          </div>
+
+          <!-- Background Section -->
+          <div class="panel-section">
+            <div class="panel-label">Background</div>
+            <div class="bg-tabs">
+              <button class="bg-tab active" data-bg-type="gradient">Gradient</button>
+              <button class="bg-tab" data-bg-type="hidden">None</button>
+              <button class="bg-tab" data-bg-type="upload">Add image</button>
+            </div>
+            <div class="bg-grid" id="bgGrid">
+              <div class="bg-option bg-grad-1 selected" data-bg="grad-1"></div>
+              <div class="bg-option bg-grad-2" data-bg="grad-2"></div>
+              <div class="bg-option bg-grad-3" data-bg="grad-3"></div>
+              <div class="bg-option bg-grad-4" data-bg="grad-4"></div>
+              <div class="bg-option bg-grad-5" data-bg="grad-5"></div>
+              <div class="bg-option bg-grad-6" data-bg="grad-6"></div>
+              <div class="bg-option bg-grad-7" data-bg="grad-7"></div>
+              <div class="bg-option bg-grad-8" data-bg="grad-8"></div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Zoom Settings Section -->
+          <div class="panel-section">
+            <div class="panel-label">Zoom Settings</div>
+            <div class="setting-row">
+              <span class="setting-label">Apply zoom</span>
+              <div id="applyZoomToggle" class="setting-toggle active"></div>
+            </div>
+            <div class="setting-row">
+              <span class="setting-label">Default depth</span>
+              <select id="zoomDepth" class="setting-select">
+                <option value="shallow">Shallow (1.1x)</option>
+                <option value="moderate" selected>Moderate (1.3x)</option>
+                <option value="deep">Deep (1.5x)</option>
+                <option value="maximum">Maximum (2x)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Hidden zoom count for JS compatibility -->
+          <span id="zoomCount" style="display: none;">0</span>
+          <div id="zoomList" style="display: none;"></div>
+
+          <!-- Click Effects Section -->
+          <div class="panel-section">
+            <div class="panel-label">Click Animation</div>
+            <div class="setting-row">
+              <span class="setting-label">Show click highlight</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="clickEnabled" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-row">
+              <span class="setting-label">Style</span>
+              <select id="clickStyle" class="setting-select">
+                <option value="orb" selected>Orb</option>
+                <option value="ripple">Ripple</option>
+                <option value="pulse">Pulse</option>
+                <option value="burst">Burst</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+            
+            <div class="panel-label" style="margin-top: 20px;">Click Color</div>
+            <div class="color-grid">
+              <div class="color-option" data-color="green" style="background: #10b981;"></div>
+              <div class="color-option" data-color="blue" style="background: #3b82f6;"></div>
+              <div class="color-option" data-color="purple" style="background: #8b5cf6;"></div>
+              <div class="color-option" data-color="pink" style="background: #ec4899;"></div>
+              <div class="color-option" data-color="orange" style="background: #f97316;"></div>
+              <div class="color-option" data-color="red" style="background: #ef4444;"></div>
+              <div class="color-option selected" data-color="white" style="background: #ffffff; border: 1px solid var(--border);"></div>
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+              <input type="color" id="customColorPicker" value="#ffffff" style="width: 50px; height: 40px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">
+              <input type="text" id="hexColorInput" placeholder="#ffffff" value="#ffffff" maxlength="7" style="flex: 1; padding: 10px 12px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'Courier New', monospace; color: var(--text-primary);">
+            </div>
+            
+            <div class="panel-label" style="margin-top: 20px;">Click Intensity</div>
+            <div class="setting-row">
+              <span class="setting-label">Intensity</span>
+              <select id="clickForce" class="setting-select">
+                <option value="weak">Weak</option>
+                <option value="moderate" selected>Moderate</option>
+                <option value="strong">Strong</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Developer Credit -->
+        <div class="dev-credit">
+          <div class="dev-credit-text">
+            <span class="dev-credit-name">
+              Made by
+              <a href="https://github.com/fasilminale" target="_blank" rel="noopener noreferrer">Fasil</a>
+            </span>
+            <a
+              class="dev-credit-hire"
+              href="mailto:fasiladam1290@gmail.com?subject=WubCast%20%E2%80%94%20Let%27s%20work%20together"
+              title="Available for hire"
+            >
+              Hire me
+            </a>
+          </div>
+          <div class="dev-credit-links">
+            <a
+              class="dev-credit-link"
+              href="https://github.com/fasilminale"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="GitHub"
+              aria-label="GitHub"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 .5C5.73.5.67 5.56.67 11.83c0 5.01 3.24 9.25 7.74 10.75.57.1.78-.25.78-.55 0-.27-.01-.99-.02-1.95-3.15.68-3.82-1.52-3.82-1.52-.52-1.31-1.27-1.66-1.27-1.66-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.25 3.34.96.1-.74.4-1.25.72-1.54-2.51-.29-5.15-1.26-5.15-5.6 0-1.24.44-2.25 1.17-3.04-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.15 1.16.91-.25 1.89-.38 2.86-.39.97.01 1.95.14 2.86.39 2.19-1.47 3.15-1.16 3.15-1.16.62 1.57.23 2.73.11 3.02.73.79 1.17 1.8 1.17 3.04 0 4.35-2.65 5.31-5.17 5.59.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.11 0 .3.21.66.79.55 4.49-1.5 7.73-5.74 7.73-10.75C23.33 5.56 18.27.5 12 .5z"/>
+              </svg>
+            </a>
+            <a
+              class="dev-credit-link"
+              href="mailto:fasiladam1290@gmail.com?subject=WubCast%20%E2%80%94%20Let%27s%20work%20together"
+              title="Email"
+              aria-label="Email"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </a>
+            <a
+              class="dev-credit-link"
+              href="https://www.linkedin.com/in/fasilminale/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="LinkedIn"
+              aria-label="LinkedIn"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.95v5.66H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.61 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.72V1.72C24 .77 23.21 0 22.23 0z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div id="exportModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Export Video</h3>
+        <button class="modal-close" id="closeExportModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="export-option">
+          <label class="export-label">Resolution</label>
+          <select id="exportResolution" class="export-select">
+            <option value="original">Original</option>
+            <option value="4k">4K (3840×2160) - BETA</option>
+            <option value="1440p">1440p (2560×1440)</option>
+            <option value="1080p" selected>1080p (1920×1080)</option>
+            <option value="720p">720p (1280×720)</option>
+            <option value="480p">480p (854×480)</option>
+          </select>
+          <div style="margin-top: 6px; font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+            Note: 4K upscaling is in beta and could encounter issues.
+          </div>
+        </div>
+        <div class="export-option">
+          <label class="export-label">Format</label>
+          <select id="exportFormat" class="export-select">
+            <option value="mp4" selected>MP4 (H.264)</option>
+            <option value="webm">WebM (VP9)</option>
+          </select>
+        </div>
+        <div class="export-option">
+          <label class="export-label">Quality</label>
+          <select id="exportQuality" class="export-select">
+            <option value="high" selected>High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low (smaller file)</option>
+          </select>
+        </div>
+        <div class="export-info" id="exportInfo">
+          <span id="exportEstimate" style="line-height: 1.5;">For best results, keep your device plugged into a charger and avoid switching tabs or minimizing the browser until processing completes.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelExport">Cancel</button>
+        <button class="btn-primary" id="confirmExport">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Export
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="zoom-analyzer.js"></script>
+  <script src="video-processor.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!--
+  WubCast Screen Recorder
+  Licensed under the MIT License.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WubCast</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app" id="app" data-state="idle">
+    <header class="top">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-name">WubCast</span>
+      </div>
+      <div class="status" id="status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span class="status-label" id="statusLabel">Ready</span>
+        <span class="status-timer" id="statusTimer" hidden>00:00</span>
+      </div>
+    </header>
+
+    <section class="setup" id="setupSection">
+      <div class="source-row" role="radiogroup" aria-label="Recording source">
+        <button class="source-tile" data-source="screen" role="radio" aria-checked="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5l1 2h2v2H7v-2h2l1-2H5a2 2 0 0 1-2-2V5zm2 0v10h14V5H5z" fill="currentColor"/></svg>
+          <span>Screen</span>
+        </button>
+        <button class="source-tile" data-source="window" role="radio" aria-checked="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 3v11h14V8H5zm0-3v2h14V5H5z" fill="currentColor"/></svg>
+          <span>Window</span>
+        </button>
+        <button class="source-tile" data-source="tab" role="radio" aria-checked="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" fill="currentColor"/></svg>
+          <span>Tab</span>
+        </button>
+      </div>
+
+      <div class="toggle-row">
+        <button class="toggle" id="toggleCamera" type="button" aria-pressed="false">
+          <span class="toggle-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7zm14 2.5 4-2.5v10l-4-2.5v-5z" fill="currentColor"/></svg>
+          </span>
+          <span class="toggle-label">Camera</span>
+          <span class="toggle-switch" aria-hidden="true"><span class="knob"></span></span>
+        </button>
+
+        <button class="toggle" id="toggleMic" type="button" aria-pressed="false">
+          <span class="toggle-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z" fill="currentColor"/></svg>
+          </span>
+          <span class="toggle-label">Microphone</span>
+          <span class="toggle-switch" aria-hidden="true"><span class="knob"></span></span>
+        </button>
+
+        <button class="toggle" id="toggleSystemAudio" type="button" aria-pressed="false">
+          <span class="toggle-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 10v4a1 1 0 0 0 1 1h3l5 4V5L7 9H4a1 1 0 0 0-1 1zm13.5 2a4.5 4.5 0 0 0-2.25-3.9v7.8A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z" fill="currentColor"/></svg>
+          </span>
+          <span class="toggle-label">System audio</span>
+          <span class="toggle-switch" aria-hidden="true"><span class="knob"></span></span>
+        </button>
+      </div>
+
+      <div class="previews">
+        <div class="camera-preview" id="cameraPreview" hidden>
+          <img id="cameraPreviewImg" alt="Camera preview" />
+        </div>
+        <div class="mic-meter" id="micMeter" hidden>
+          <span class="mic-meter-label">Mic level</span>
+          <span class="mic-meter-bar"><span class="mic-meter-fill" id="micMeterFill"></span></span>
+        </div>
+      </div>
+
+      <details class="advanced">
+        <summary>Advanced</summary>
+        <div class="adv-body">
+          <label class="adv-row">
+            <span>Quality</span>
+            <select id="quality">
+              <option value="4k">4K</option>
+              <option value="1440p">1440p</option>
+              <option value="1080p" selected>1080p</option>
+              <option value="720p">720p</option>
+            </select>
+          </label>
+          <label class="adv-row">
+            <span>Frame rate</span>
+            <select id="fps">
+              <option value="60">60 fps</option>
+              <option value="30" selected>30 fps</option>
+            </select>
+          </label>
+          <label class="adv-row">
+            <span>Countdown</span>
+            <select id="countdown">
+              <option value="0">Off</option>
+              <option value="3" selected>3 seconds</option>
+              <option value="5">5 seconds</option>
+            </select>
+          </label>
+          <label class="adv-row checkbox">
+            <input type="checkbox" id="trackCursor" checked>
+            <span>Track cursor for auto-zoom</span>
+          </label>
+        </div>
+      </details>
+    </section>
+
+    <section class="active-hint" id="activeHint" hidden>
+      <p>Recording in progress. Use the floating controls on the page, the keyboard shortcut, or Stop below.</p>
+    </section>
+
+    <footer class="foot">
+      <button class="primary" id="primaryBtn" type="button">
+        <span class="primary-icon" aria-hidden="true"></span>
+        <span class="primary-label" id="primaryLabel">Start recording</span>
+      </button>
+      <div class="shortcut-hint" id="shortcutHint">
+        <span id="shortcutKeys">Ctrl+Shift+E</span> to start/stop \u00B7 <a href="#" id="openShortcuts">edit</a>
+      </div>
+    </footer>
+  </main>
+
+  <script src="prefs.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
