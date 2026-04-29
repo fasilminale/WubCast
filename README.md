@@ -1,4 +1,4 @@
-# WubCast — Open Source Screen Recorder with Auto Zoom
+# WubCast - Open Source Screen Recorder with Auto Zoom
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
